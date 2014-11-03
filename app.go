@@ -8,6 +8,7 @@ import (
   "io/ioutil"
   "encoding/json"
   "net/url"
+  "log"
 )
 
 func perror(err error) {
@@ -48,6 +49,7 @@ func main() {
   perror(err)
   defer res.Body.Close()
   body, err = ioutil.ReadAll(res.Body)
+  log.Println(string(body))
   perror(err)
 
   type Record struct {
@@ -75,20 +77,35 @@ func main() {
     }
   }
 
-  res, err = http.PostForm("https://www.cloudflare.com/api_json.html", url.Values{
-      "a": {"rec_edit"},
-      "tkn": {os.Getenv("CLOUDFLARE_TOKEN")},
-      "id": {targetRecord.Rec_Id},
-      "email": {os.Getenv("CLOUDFLARE_EMAIL")},
-      "z": {os.Getenv("CLOUDFLARE_ROOT_DOMAIN")},
-      "type": {"A"},
-      "content": {thisIp.Ip.String()},
-      "service_mode": {"0"},
-      "ttl": {"120"},
-      "name": {os.Getenv("CLOUDFLARE_SUBDOMAIN")},
-    })
+  if targetRecord.Rec_Id == "" {
+	log.Println("Record doesn't exist")
+	  res, err = http.PostForm("https://www.cloudflare.com/api_json.html", url.Values{
+	      "a": {"rec_new"},
+	      "tkn": {os.Getenv("CLOUDFLARE_TOKEN")},
+	      "email": {os.Getenv("CLOUDFLARE_EMAIL")},
+	      "z": {os.Getenv("CLOUDFLARE_ROOT_DOMAIN")},
+	      "type": {"A"},
+	      "content": {thisIp.Ip.String()},
+	      "ttl": {"120"},
+	      "name": {os.Getenv("CLOUDFLARE_SUBDOMAIN")},
+	    })
+  } else {
+	  res, err = http.PostForm("https://www.cloudflare.com/api_json.html", url.Values{
+	      "a": {"rec_edit"},
+	      "tkn": {os.Getenv("CLOUDFLARE_TOKEN")},
+	      "id": {targetRecord.Rec_Id},
+	      "email": {os.Getenv("CLOUDFLARE_EMAIL")},
+	      "z": {os.Getenv("CLOUDFLARE_ROOT_DOMAIN")},
+	      "type": {"A"},
+	      "content": {thisIp.Ip.String()},
+	      "service_mode": {"0"},
+	      "ttl": {"120"},
+	      "name": {os.Getenv("CLOUDFLARE_SUBDOMAIN")},
+	    })
+  }
   perror(err)
   defer res.Body.Close()
   body, err = ioutil.ReadAll(res.Body)
+  log.Println(string(body))  
   perror(err)
 }
